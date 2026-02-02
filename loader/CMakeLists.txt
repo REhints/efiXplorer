@@ -40,6 +40,8 @@ file(
   "${UEFITOOL_DIR}/common/*.c"
   "${UEFITOOL_DIR}/common/*.cpp"
   "${UEFITOOL_DIR}/common/*.h"
+  "${UEFITOOL_DIR}/common/brotli/common/*.c"
+  "${UEFITOOL_DIR}/common/brotli/dec/*.c"
   "${UEFITOOL_DIR}/common/bstrlib/*.c"
   "${UEFITOOL_DIR}/common/bstrlib/*.cpp"
   "${UEFITOOL_DIR}/common/bstrlib/*.h"
