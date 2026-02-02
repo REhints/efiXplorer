@@ -29,42 +29,47 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../cmake)
 
 find_package(IdaSdk REQUIRED)
 
-include_directories(${PROJECT_SOURCE_DIR}/../third_party)
+set(THIRD_PARTY_DIR "${PROJECT_SOURCE_DIR}/../third_party")
+set(UEFITOOL_DIR "${THIRD_PARTY_DIR}/uefitool")
+
+include_directories(${THIRD_PARTY_DIR})
 
 file(
   GLOB
   uefitool_src
-  "uefitool/common/*.c"
-  "uefitool/common/*.cpp"
-  "uefitool/common/*.h"
-  "uefitool/common/bstrlib/*.c"
-  "uefitool/common/bstrlib/*.cpp"
-  "uefitool/common/bstrlib/*.h"
-  "uefitool/common/digest/sha1.c"
-  "uefitool/common/digest/sha256.c"
-  "uefitool/common/digest/sha512.c"
-  "uefitool/common/digest/sm3.c"
-  "uefitool/common/generated/*.cpp"
-  "uefitool/common/generated/*.h"
-  "uefitool/common/kaitai/*.cpp"
-  "uefitool/common/kaitai/*.h"
-  "uefitool/common/LZMA/*.c"
-  "uefitool/common/LZMA/*.cpp"
-  "uefitool/common/LZMA/*.h"
-  "uefitool/common/LZMA/SDK/C/*.c"
-  "uefitool/common/LZMA/SDK/C/*.cpp"
-  "uefitool/common/LZMA/SDK/C/*.h"
-  "uefitool/common/Tiano/*.c"
-  "uefitool/common/Tiano/*.cpp"
-  "uefitool/common/Tiano/*.h"
-  "uefitool/common/zlib/*.c"
-  "uefitool/common/zlib/*.cpp"
-  "uefitool/common/zlib/*.h"
-  "uefitool/ffsdumper.cpp"
-  "uefitool/ffsdumper.h"
-  "uefitool/uefidump.cpp"
-  "uefitool/uefidump.h"
-  "uefitool/version.h")
+  "${UEFITOOL_DIR}/common/*.c"
+  "${UEFITOOL_DIR}/common/*.cpp"
+  "${UEFITOOL_DIR}/common/*.h"
+  "${UEFITOOL_DIR}/common/brotli/common/*.c"
+  "${UEFITOOL_DIR}/common/brotli/dec/*.c"
+  "${UEFITOOL_DIR}/common/bstrlib/*.c"
+  "${UEFITOOL_DIR}/common/bstrlib/*.cpp"
+  "${UEFITOOL_DIR}/common/bstrlib/*.h"
+  "${UEFITOOL_DIR}/common/digest/sha1.c"
+  "${UEFITOOL_DIR}/common/digest/sha256.c"
+  "${UEFITOOL_DIR}/common/digest/sha512.c"
+  "${UEFITOOL_DIR}/common/digest/sm3.c"
+  "${UEFITOOL_DIR}/common/generated/*.cpp"
+  "${UEFITOOL_DIR}/common/generated/*.h"
+  "${UEFITOOL_DIR}/common/kaitai/*.cpp"
+  "${UEFITOOL_DIR}/common/kaitai/*.h"
+  "${UEFITOOL_DIR}/common/LZMA/*.c"
+  "${UEFITOOL_DIR}/common/LZMA/*.cpp"
+  "${UEFITOOL_DIR}/common/LZMA/*.h"
+  "${UEFITOOL_DIR}/common/LZMA/SDK/C/*.c"
+  "${UEFITOOL_DIR}/common/LZMA/SDK/C/*.cpp"
+  "${UEFITOOL_DIR}/common/LZMA/SDK/C/*.h"
+  "${UEFITOOL_DIR}/common/Tiano/*.c"
+  "${UEFITOOL_DIR}/common/Tiano/*.cpp"
+  "${UEFITOOL_DIR}/common/Tiano/*.h"
+  "${UEFITOOL_DIR}/common/zlib/*.c"
+  "${UEFITOOL_DIR}/common/zlib/*.cpp"
+  "${UEFITOOL_DIR}/common/zlib/*.h"
+  "${UEFITOOL_DIR}/ffsdumper.cpp"
+  "${UEFITOOL_DIR}/ffsdumper.h"
+  "${UEFITOOL_DIR}/uefidump.cpp"
+  "${UEFITOOL_DIR}/uefidump.h"
+  "${UEFITOOL_DIR}/version.h")
 
 # efiXloader sources
 file(GLOB efiXloader_src "*.cc" "*.h")
