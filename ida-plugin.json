@@ -3,7 +3,7 @@
   "plugin": {
     "name": "efiXplorer",
     "entryPoint": "efiXplorer",
-    "version": "6.1.2",
+    "version": "6.2.0",
     "idaVersions": ">=8.3",
     "urls": {
       "repository": "https://github.com/rehints/efixplorer"
