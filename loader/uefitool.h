@@ -31,10 +31,10 @@
 #include "uefitool/common/ustring.h"
 #include "uefitool/version.h"
 
-#include "uefitool/UEFIExtract/ffsdumper.h"
-#include "uefitool/UEFIExtract/uefidump.h"
 #include "fstream"
 #include "nlohmann_json/json.hpp"
+#include "uefitool/UEFIExtract/ffsdumper.h"
+#include "uefitool/UEFIExtract/uefidump.h"
 
 #include "ida_core.h"
 

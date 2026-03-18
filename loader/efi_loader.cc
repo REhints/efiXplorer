@@ -105,22 +105,29 @@ void idaapi load_file(linput_t *li, ushort neflag, const char *fileformatname) {
   // we currently only handle 64-bit binaries with the EFI loader
   add_til("uefi64.til", ADDTIL_DEFAULT);
 
-  msg("[efiXloader] processing UEFI binaries:\n");
-  if (uefiParser.files.size()) {
-    for (int i = 0; i < uefiParser.files.size(); i++) {
-      if (uefiParser.files[i]->is_te) {
-        continue;
-      }
-      auto inf = open_linput(uefiParser.files[i]->dump_name.c_str(), false);
-      if (!inf) {
-        msg("[efiXloader] unable to open file %s\n",
-            uefiParser.files[i]->dump_name.c_str());
-        continue;
-      }
-      peManager.process(inf, uefiParser.files[i]->dump_name.c_str(), i);
-    }
-  } else {
+  if (uefiParser.files.empty()) {
     msg("[efiXloader] can not parse input firmware\n");
+    return;
+  }
+
+  int processed = 0;
+  for (size_t i = 0; i < uefiParser.files.size(); i++) {
+    const auto &file = uefiParser.files[i];
+    if (file->is_te) {
+      continue;
+    }
+    auto inf = open_linput(file->dump_name.c_str(), false);
+    if (!inf) {
+      msg("[efiXloader] unable to open file %s\n", file->dump_name.c_str());
+      continue;
+    }
+    if (peManager.process(inf, file->dump_name.c_str(), i)) {
+      processed++;
+    }
+  }
+  if (processed == 0) {
+    msg("[efiXloader] no images were loaded\n");
+    return;
   }
 
   plugin_t *findpat = find_plugin("patfind", true);

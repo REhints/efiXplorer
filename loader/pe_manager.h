@@ -24,7 +24,7 @@ public:
     pe_sel_base = 0;
     machine_type = mt;
   }
-  void process(linput_t *li, const std::string &fname, int ord);
+  bool process(linput_t *li, const std::string &fname, int ord);
   uint16_t machine_type;
 
 private:
