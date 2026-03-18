@@ -65,7 +65,7 @@ def cli():
 @hexrays_options
 @click.argument("idasdk")
 def build_plugin(idasdk: str, hexrays_sdk: str, no_hexrays: bool):
-    """Build plugin"""
+    """Build plugin."""
 
     hrs = resolve_hexrays_sdk(idasdk, hexrays_sdk, no_hexrays)
     cmake_build(ROOT_DIR / "plugin", idasdk, hexrays_sdk=hrs)
@@ -74,7 +74,7 @@ def build_plugin(idasdk: str, hexrays_sdk: str, no_hexrays: bool):
 @cli.command()
 @click.argument("idasdk")
 def build_loader(idasdk: str):
-    """Build loader"""
+    """Build loader."""
 
     cmake_build(ROOT_DIR / "loader", idasdk)
 
@@ -83,7 +83,7 @@ def build_loader(idasdk: str):
 @hexrays_options
 @click.argument("idasdk")
 def build_all(idasdk: str, hexrays_sdk: str, no_hexrays: bool):
-    """Build plugin and loader"""
+    """Build plugin and loader."""
 
     hrs = resolve_hexrays_sdk(idasdk, hexrays_sdk, no_hexrays)
     cmake_build(ROOT_DIR, idasdk, hexrays_sdk=hrs)
