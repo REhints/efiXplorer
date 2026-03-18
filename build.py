@@ -30,7 +30,9 @@ def cmake_build(source_dir: pathlib.Path, idasdk: str, hexrays_sdk: str | None =
     )
 
 
-def resolve_hexrays_sdk(idasdk: str, hexrays_sdk: str | None, no_hexrays: bool) -> str | None:
+def resolve_hexrays_sdk(
+    idasdk: str, hexrays_sdk: str | None, no_hexrays: bool
+) -> str | None:
     if no_hexrays:
         return None
     return hexrays_sdk if hexrays_sdk else idasdk
@@ -42,14 +44,14 @@ def hexrays_options(f):
         "hexrays_sdk",
         type=str,
         default=None,
-        help="path to hexrays_sdk directory (default: IDASDK)",
+        help="Path to hexrays_sdk directory (default: IDASDK).",
     )(f)
     f = click.option(
         "--no-hexrays",
         "no_hexrays",
         is_flag=True,
         default=False,
-        help="disable HexRays analysis",
+        help="Disable HexRays analysis.",
     )(f)
     return f
 
