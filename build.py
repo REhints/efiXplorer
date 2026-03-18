@@ -19,8 +19,6 @@ def cmake_build(source_dir: pathlib.Path, idasdk: str, hexrays_sdk: str | None =
     if hexrays_sdk is not None:
         click.secho("HexRays analysis is enabled", fg="green")
         command.append(f"-DHexRaysSdk_ROOT_DIR={hexrays_sdk}")
-    else:
-        click.secho("HexRays analysis is disabled", fg="yellow")
 
     subprocess.run(command, cwd=build_dir, check=True)
     subprocess.run(
