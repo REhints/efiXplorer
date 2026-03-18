@@ -221,19 +221,19 @@ analysis_kind_t efi_utils::get_analysis_kind() {
   if (inf_get_filetype() != f_PE) {
     // only PE/TE files,
     // if file is TE, IDA will mark it with f_PE file type
-    efi_utils::log("unsupported format");
+    efi_utils::log("unsupported format\n");
     return analysis_kind_t::unsupported;
   }
 
   // check subsystem
   peheader_t pe;
   if (!read_pe_header(pe)) {
-    efi_utils::log("unsupported format");
+    efi_utils::log("unsupported format\n");
     return analysis_kind_t::unsupported;
   }
 
   if (!pe.is_te() && !pe.is_efi()) {
-    efi_utils::log("unsupported subsystem");
+    efi_utils::log("unsupported subsystem\n");
     return analysis_kind_t::unsupported;
   }
 

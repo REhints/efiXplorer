@@ -291,7 +291,7 @@ void attach_action_protocols_deps() {
   // attach action in protocols chooser
   TWidget *widget = find_widget("efiXplorer: protocols");
   if (widget == nullptr) {
-    efi_utils::log("can not find protocols chooser");
+    efi_utils::log("can not find protocols chooser\n");
     return;
   }
   register_action(protocols_deps);
@@ -329,7 +329,7 @@ void attach_action_modules_seq() {
   // attach action in protocols chooser
   TWidget *widget = find_widget("efiXplorer: protocols");
   if (widget == nullptr) {
-    efi_utils::log("can not find protocols chooser");
+    efi_utils::log("can not find protocols chooser\n");
     return;
   }
   register_action(modules_seq);
