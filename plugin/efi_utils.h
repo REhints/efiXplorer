@@ -62,6 +62,7 @@ void op_stroff_for_global_interface(ea_set_t xrefs, qstring type_name);
 void op_stroff_for_interface(xreflist_t local_xrefs, qstring type_name);
 void set_const_char16_type(ea_t ea);
 void set_entry_arg_to_pei_svc();
+void set_pei_entry_type_for_uefi();
 void set_guid_type(ea_t ea);
 void set_ptr_type_and_name(ea_t ea, std::string name, std::string type);
 void set_type_and_name(ea_t ea, std::string name, std::string type);

@@ -69,13 +69,14 @@ efi_analysis::efi_analyser_t::efi_analyser_t() {
   }
 
   // set mask and masked value for MACRO_EFI enum value detection
-  if (m_analysis_kind == analysis_kind_t::x86_32) {
+  if (m_analysis_kind == analysis_kind_t::x86_32 ||
+      (m_analysis_kind == analysis_kind_t::uefi && inf_is_32bit_exactly())) {
     m_mask = 0xffffff00;
     m_masked_value = 0x80000000;
   } else {
     // analysis_kind_t::x86_64
-    // analysis_kind_t::aarch64,
-    // analysis_kind_t::uefi -- as only 64-bit binaries are loaded
+    // analysis_kind_t::aarch64
+    // analysis_kind_t::uefi (64-bit)
     m_mask = 0xffffffffffffff00;
     m_masked_value = 0x8000000000000000;
   }
@@ -2737,13 +2738,32 @@ bool efi_analysis::efi_analyse_main_x86_32() {
   // find .text and .data segments
   analyser.get_segments();
 
+  // analyse all modules (for UEFI firmware with multiple modules)
+  auto res = ASKBTN_NO;
+  if (analyser.m_analysis_kind == analysis_kind_t::uefi) {
+    res = ask_yn(1, "Do you want to analyse all modules with auto_mark_range?");
+  }
+  if (res == ASKBTN_YES && analyser.m_code_segs.size() &&
+      analyser.m_data_segs.size()) {
+    segment_t *start_seg = analyser.m_code_segs.at(0);
+    segment_t *end_seg =
+        analyser.m_data_segs.at(analyser.m_data_segs.size() - 1);
+    ea_t start_ea = start_seg->start_ea;
+    ea_t end_ea = end_seg->end_ea;
+    auto_mark_range(start_ea, end_ea, AU_USED);
+    plan_and_wait(start_ea, end_ea, 1);
+  }
+
   // mark GUIDs
   analyser.annotate_data_guids();
 
   // set operands representation
   analyser.set_operands_repr();
 
-  if (g_args.disable_ui) {
+  if (analyser.m_analysis_kind == analysis_kind_t::uefi) {
+    // UEFI firmware with 32-bit PEI modules
+    analyser.m_ftype = ffs_file_type_t::peim;
+  } else if (g_args.disable_ui) {
     analyser.m_ftype = g_args.module_type == module_type_t::pei
                            ? analyser.m_ftype = ffs_file_type_t::peim
                            : analyser.m_ftype = ffs_file_type_t::driver;
@@ -2772,7 +2792,12 @@ bool efi_analysis::efi_analyse_main_x86_32() {
     efi_hexrays::apply_all_types_for_interfaces_smm(analyser.m_all_protocols);
 #endif
   } else if (analyser.m_ftype == ffs_file_type_t::peim) {
-    efi_utils::set_entry_arg_to_pei_svc();
+    if (analyser.m_analysis_kind == analysis_kind_t::uefi) {
+      // UEFI multi-module: force-apply PEI entry prototype
+      efi_utils::set_pei_entry_type_for_uefi();
+    } else {
+      efi_utils::set_entry_arg_to_pei_svc();
+    }
     efi_utils::add_struct_for_shifted_ptr();
 #ifdef HEX_RAYS
     for (auto addr : analyser.m_funcs) {

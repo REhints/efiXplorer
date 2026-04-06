@@ -83,6 +83,9 @@ bool idaapi run(size_t arg) {
     if (get_machine_type() == AARCH64) {
       efi_utils::log("analyse ARM64 modules\n");
       efi_analysis::efi_analyse_main_aarch64();
+    } else if (inf_is_32bit_exactly()) {
+      efi_utils::log("analyse x86 32-bit modules\n");
+      efi_analysis::efi_analyse_main_x86_32();
     } else {
       efi_utils::log("analyse AMD64 modules\n");
       efi_analysis::efi_analyse_main_x86_64();

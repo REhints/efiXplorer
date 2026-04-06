@@ -29,6 +29,10 @@ std::string file_format_name() {
 ffs_file_type_t guess_file_type(analysis_kind_t analysis_kind,
                                 json_list_t *all_guids) {
   if (analysis_kind == analysis_kind_t::uefi) {
+    // 32-bit UEFI firmware contains PEI modules
+    if (inf_is_32bit_exactly()) {
+      return ffs_file_type_t::peim;
+    }
     return ffs_file_type_t::driver;
   }
 
@@ -256,10 +260,15 @@ analysis_kind_t efi_utils::get_analysis_kind() {
 
 ffs_file_type_t efi_utils::ask_file_type(json_list_t *all_guids) {
   const auto analysis_kind = efi_utils::get_analysis_kind();
-  if (analysis_kind == analysis_kind_t::uefi ||
-      analysis_kind == analysis_kind_t::x86_64) {
-    // if the input is UEFI firmware or an x86-64 module,
-    // it will be analysed as DXE/SMM
+  if (analysis_kind == analysis_kind_t::uefi) {
+    // 32-bit UEFI firmware contains PEI modules
+    if (inf_is_32bit_exactly()) {
+      return ffs_file_type_t::peim;
+    }
+    return ffs_file_type_t::driver;
+  }
+  if (analysis_kind == analysis_kind_t::x86_64) {
+    // x86-64 module will be analysed as DXE/SMM
     return ffs_file_type_t::driver;
   }
 
@@ -469,6 +478,53 @@ void efi_utils::set_entry_arg_to_pei_svc() {
     }
 
     apply_tinfo(start_ea, f_tinfo, TINFO_DEFINITE);
+  }
+}
+
+//--------------------------------------------------------------------------
+// force-apply PEI entry point prototype on all entry points
+// for UEFI multi-module IDB where auto-analysis may not have guessed types
+void efi_utils::set_pei_entry_type_for_uefi() {
+  tinfo_t tif_pei;
+  if (!tif_pei.get_named_type(get_idati(), "EFI_PEI_SERVICES")) {
+    efi_utils::log("EFI_PEI_SERVICES type not found\n");
+    return;
+  }
+
+  tinfo_t p_tinfo;
+  p_tinfo.create_ptr(tif_pei);
+  tinfo_t pp_tinfo;
+  pp_tinfo.create_ptr(p_tinfo);
+
+  tinfo_t efi_handle;
+  if (!efi_handle.get_named_type(get_idati(), "EFI_HANDLE")) {
+    efi_handle.create_ptr(tinfo_t(BT_VOID));
+  }
+
+  tinfo_t efi_status;
+  if (!efi_status.get_named_type(get_idati(), "EFI_STATUS")) {
+    efi_status = tinfo_t(BT_INT);
+  }
+
+  for (auto idx = 0; idx < get_entry_qty(); ++idx) {
+    const auto ord = get_entry_ordinal(idx);
+    const auto ea = get_entry(ord);
+
+    func_type_data_t funcdata;
+    funcdata.rettype = efi_status;
+
+    funcdata.push_back(funcarg_t());
+    funcdata.back().type = efi_handle;
+    funcdata.back().name = "ImageHandle";
+
+    funcdata.push_back(funcarg_t());
+    funcdata.back().type = pp_tinfo;
+    funcdata.back().name = "PeiServices";
+
+    tinfo_t f_tinfo;
+    if (f_tinfo.create_func(funcdata)) {
+      apply_tinfo(ea, f_tinfo, TINFO_DEFINITE);
+    }
   }
 }
 

@@ -73,9 +73,7 @@ void efi_deps_t::get_protocols_chooser(json_list_t protocols) {
 }
 
 bool efi_deps_t::load_deps_from_uefitool() {
-  std::filesystem::path deps_json;
-  deps_json /= get_path(PATH_TYPE_IDB);
-  deps_json.replace_extension(".deps.json");
+  std::string deps_json = std::string(get_path(PATH_TYPE_CMD)) + ".deps.json";
   if (!std::filesystem::exists(deps_json)) {
     return false;
   }
@@ -85,9 +83,8 @@ bool efi_deps_t::load_deps_from_uefitool() {
 }
 
 bool efi_deps_t::load_modules_with_guids() {
-  std::filesystem::path modules_json;
-  modules_json /= get_path(PATH_TYPE_IDB);
-  modules_json.replace_extension(".images.json");
+  std::string modules_json =
+      std::string(get_path(PATH_TYPE_CMD)) + ".images.json";
   if (!std::filesystem::exists(modules_json)) {
     return false;
   }

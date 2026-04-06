@@ -3,27 +3,16 @@
 
 #include "uefitool.h"
 
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
 void efiloader::Uefitool::show_messages() {
-  for (size_t i = 0; i < messages.size(); i++) {
-    msg("[uefitool] %s\n", messages[i].first.toLocal8Bit());
+  for (const auto &[text, index] : messages) {
+    msg("[uefitool] %s\n", text.toLocal8Bit());
   }
-}
-
-void efiloader::Uefitool::get_unique_name(qstring &name) {
-  // if the given name is already in use, create a new one
-  qstring new_name = name;
-  std::string suf;
-  int index = 0;
-  while (!(unique_names.insert(new_name).second)) {
-    suf = "_" + std::to_string(++index);
-    new_name = name + static_cast<qstring>(suf.c_str());
-  }
-  name = new_name;
 }
 
 void efiloader::Uefitool::get_image_guid(qstring &image_guid,
@@ -55,7 +44,7 @@ void efiloader::Uefitool::get_image_guid(qstring &image_guid,
 std::vector<std::string>
 efiloader::Uefitool::parse_depex_section_body(const UModelIndex &index,
                                               UString &parsed) {
-  // Adopted from FfsParser::parseDepexSectionBody
+  // adopted from FfsParser::parseDepexSectionBody
   std::vector<std::string> res;
 
   if (!index.isValid())
@@ -161,7 +150,6 @@ efiloader::Uefitool::parse_depex_section_body(const UModelIndex &index,
       break;
     default:
       return res;
-      break;
     }
   }
 
@@ -183,29 +171,31 @@ efiloader::Uefitool::parse_apriori_raw_section(const UModelIndex &index) {
     return res;
   }
 
-  UINT32 count = (UINT32)(body.size() / sizeof(EFI_GUID));
-  if (count > 0) {
-    for (UINT32 i = 0; i < count; i++) {
-      const EFI_GUID *guid = (const EFI_GUID *)body.constData() + i;
-      res.push_back(
-          reinterpret_cast<char *>(guidToUString(readUnaligned(guid)).data));
-    }
+  auto count = static_cast<UINT32>(body.size() / sizeof(EFI_GUID));
+  for (UINT32 i = 0; i < count; i++) {
+    const auto *guid = reinterpret_cast<const EFI_GUID *>(body.constData()) + i;
+    res.push_back(
+        reinterpret_cast<char *>(guidToUString(readUnaligned(guid)).data));
   }
 
   return res;
 }
 
-void efiloader::Uefitool::set_machine_type(UByteArray pe_body) {
+void efiloader::Uefitool::set_machine_type(const UByteArray &pe_body) {
   const char *data = pe_body.constData();
   if (pe_body.size() < 64) {
     return;
   }
-  uint32_t _pe_header_off = *(uint32_t *)(data + 0x3c);
-  if (pe_body.size() < _pe_header_off + 6) {
+  uint32_t pe_hdr_off = 0;
+  memcpy(&pe_hdr_off, data + 0x3c, sizeof(pe_hdr_off));
+  if (pe_hdr_off > static_cast<uint32_t>(pe_body.size()) ||
+      pe_body.size() - pe_hdr_off < 6) {
     return;
   }
-  if (*(uint32_t *)(data + _pe_header_off) == 0x4550) {
-    machine_type = *(uint16_t *)(data + _pe_header_off + 4);
+  uint32_t sig = 0;
+  memcpy(&sig, data + pe_hdr_off, sizeof(sig));
+  if (sig == 0x4550) {
+    memcpy(&machine_type, data + pe_hdr_off + 4, sizeof(machine_type));
     machine_type_initialised = true;
   }
 }
@@ -227,13 +217,16 @@ void efiloader::Uefitool::handle_raw_section(const UModelIndex &index) {
   }
 }
 
-inline void get_module_name(qstring &module_name, efiloader::File *file) {
+namespace {
+void get_module_name(qstring &module_name, efiloader::File *file) {
   utf16_utf8(&module_name,
              reinterpret_cast<const wchar16_t *>(file->uname.data()));
 }
+} // namespace
 
-void efiloader::Uefitool::dump(const UModelIndex &index, int i,
-                               efiloader::File *file) {
+void efiloader::Uefitool::process_section(const UModelIndex &index,
+                                          int /*section_idx*/,
+                                          efiloader::File *file) {
   qstring name;
   qstring guid;
 
@@ -261,7 +254,7 @@ void efiloader::Uefitool::dump(const UModelIndex &index, int i,
   case EFI_SECTION_COMPRESSION:
   case EFI_SECTION_GUID_DEFINED:
     for (int i = 0; i < model.rowCount(index); i++) {
-      dump(index.child(i, 0), i, file);
+      process_section(index.child(i, 0), i, file);
     }
     break;
   case EFI_SECTION_DXE_DEPEX:
@@ -292,51 +285,56 @@ void efiloader::Uefitool::dump(const UModelIndex &index, int i,
     file->module_name.swap(name);
     file->module_guid.swap(guid);
   }
-
-  dump(index);
 }
 
-void efiloader::Uefitool::dump(const UModelIndex &index) {
-  USTATUS err;
-
+void efiloader::Uefitool::extract_files(const UModelIndex &index) {
   if (is_file_index(index)) {
     auto file = std::make_unique<File>();
     for (int i = 0; i < model.rowCount(index); i++) {
-      dump(index.child(i, 0), i, file.get());
+      process_section(index.child(i, 0), i, file.get());
     }
 
-    // append file
-    if (file->is_ok()) {
+    // skip duplicate GUIDs and consider them to be the same module
+    if (file->is_ok() && seen_guids.insert(file->module_guid.c_str()).second) {
       all_modules[file->module_guid.c_str()] = {
           {"name", file->module_name.c_str()},
           {"kind", file->module_kind.c_str()}};
-      file->write();
+      file->write(output_dir);
       files.push_back(std::move(file));
     }
-  } else {
-    for (int i = 0; i < model.rowCount(index); i++) {
-      dump(index.child(i, 0));
-    }
+  }
+
+  // recurse into children to find nested files (e.g. inner firmware volumes)
+  for (int i = 0; i < model.rowCount(index); i++) {
+    extract_files(index.child(i, 0));
   }
 }
 
-void efiloader::Uefitool::dump() { return dump(model.index(0, 0)); }
+void efiloader::Uefitool::dump() {
+  // use the original input file path so both 32-bit and 64-bit
+  // sessions share the same dump directory (e.g., fw.bin.efiloader)
+  qstring input_path(get_path(PATH_TYPE_CMD));
+  output_dir = input_path + qstring(".efiloader");
+  std::filesystem::create_directory(output_dir.c_str());
+  extract_files(model.index(0, 0));
+}
 
-void efiloader::Uefitool::get_deps(UModelIndex index, std::string key) {
+void efiloader::Uefitool::get_deps(const UModelIndex &index,
+                                   const std::string &key) {
   UString parsed;
-  std::vector<std::string> deps;
-  qstring image_guid("");
+  qstring image_guid;
 
   get_image_guid(image_guid, index);
-  deps = parse_depex_section_body(index, parsed);
-  if (deps.size()) {
+  auto deps = parse_depex_section_body(index, parsed);
+  if (!deps.empty()) {
     msg("[efiXloader] dependency section for image with GUID %s: %s\n",
         image_guid.c_str(), parsed.data);
     all_deps[key][image_guid.c_str()] = deps;
   }
 }
 
-void efiloader::Uefitool::get_apriori(UModelIndex index, std::string key) {
+void efiloader::Uefitool::get_apriori(const UModelIndex &index,
+                                      const std::string &key) {
   if (all_deps.contains(key)) {
     return;
   }
@@ -349,13 +347,13 @@ void efiloader::Uefitool::get_apriori(UModelIndex index, std::string key) {
 
 void efiloader::Uefitool::dump_jsons() {
   // dump JSON with DEPEX and GUIDs information for each image
-  std::filesystem::path out;
-  out /= get_path(PATH_TYPE_IDB);
-  out.replace_extension(".deps.json");
-  std::ofstream out_deps(out);
+  // use the original input file path (not the bitness-specific IDB path)
+  // so both 32-bit and 64-bit sessions share the same JSON files
+  qstring input_path(get_path(PATH_TYPE_CMD));
+
+  std::ofstream out_deps((input_path + ".deps.json").c_str());
   out_deps << std::setw(2) << all_deps << std::endl;
 
-  out.replace_extension("").replace_extension(".images.json");
-  std::ofstream out_guids(out);
+  std::ofstream out_guids((input_path + ".images.json").c_str());
   out_guids << std::setw(2) << all_modules << std::endl;
 }
