@@ -61,10 +61,12 @@ function(_ida_common_target_settings t ea64)
 endfunction()
 
 function(_target_link_libraries_win_ea64 t)
-  if(EXISTS ${IdaSdk_DIR}/lib/x64_win_vc_64_pro/ida.lib) # for idasdk84
-    target_link_libraries(${t} ${IdaSdk_DIR}/lib/x64_win_vc_64_pro/ida.lib)
-  elseif(EXISTS ${IdaSdk_DIR}/lib/x64_win_vc_64/ida.lib) # for idasdk90
+  if(EXISTS ${IdaSdk_DIR}/lib/x64_win_64/ida.lib)
+    target_link_libraries(${t} ${IdaSdk_DIR}/lib/x64_win_64/ida.lib)
+  elseif(EXISTS ${IdaSdk_DIR}/lib/x64_win_vc_64/ida.lib)
     target_link_libraries(${t} ${IdaSdk_DIR}/lib/x64_win_vc_64/ida.lib)
+  elseif(EXISTS ${IdaSdk_DIR}/lib/x64_win_vc_64_pro/ida.lib)
+    target_link_libraries(${t} ${IdaSdk_DIR}/lib/x64_win_vc_64_pro/ida.lib)
   else()
     message(FATAL_ERROR "ida.lib could not be found")
   endif()
