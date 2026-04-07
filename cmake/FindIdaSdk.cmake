@@ -75,6 +75,14 @@ function(_target_link_libraries_win_ea32 t)
   target_link_libraries(${t} ${IdaSdk_DIR}/lib/x64_win_vc_32_pro/ida.lib)
 endfunction()
 
+function(_target_link_libraries_linux_ea64 t)
+  if(EXISTS ${IdaSdk_DIR}/lib/x64_linux_64/libida.so)
+    target_link_libraries(${t} ${IdaSdk_DIR}/lib/x64_linux_64/libida.so)
+  elseif(EXISTS ${IdaSdk_DIR}/lib/x64_linux_gcc_64/libida.so)
+    target_link_libraries(${t} ${IdaSdk_DIR}/lib/x64_linux_gcc_64/libida.so)
+  endif()
+endfunction()
+
 function(_ida_plugin name ea64 link_script) # ARGN contains sources
   if(ea64)
     set(t ${name}${_so64})
@@ -97,6 +105,10 @@ function(_ida_plugin name ea64 link_script) # ARGN contains sources
       # Always use the linker script needed for IDA.
       target_link_libraries(${t} ${_ida_compile_options} -Wl,--version-script
                             ${IdaSdk_DIR}/${link_script})
+      if(ea64)
+        # Support only idasdk90 and later.
+        _target_link_libraries_linux_ea64(${t})
+      endif()
     endif()
 
     target_compile_options(${t} PUBLIC -Wno-non-virtual-dtor -Wno-varargs)
@@ -104,7 +116,7 @@ function(_ida_plugin name ea64 link_script) # ARGN contains sources
     if(ea64)
       _target_link_libraries_win_ea64(${t})
     else()
-      # Not reachable when using idasdk90 and later
+      # Not reachable when using idasdk90 and later.
       _target_link_libraries_win_ea32(${t})
     endif()
   endif()
@@ -132,6 +144,10 @@ function(_ida_loader name ea64 link_script)
       # Always use the linker script needed for IDA.
       target_link_libraries(${t} ${_ida_compile_options} -Wl,--version-script
                             ${IdaSdk_DIR}/${link_script})
+      if(ea64)
+        # Support only idasdk90 and later.
+        _target_link_libraries_linux_ea64(${t})
+      endif()
     endif()
 
     target_compile_options(${t} PUBLIC -Wno-non-virtual-dtor -Wno-varargs)
