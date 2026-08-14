@@ -5,6 +5,18 @@
 
 #include <string>
 
+// the analysis applies types before the passes below, so a cached ctree can be
+// outdated and has to be dropped; done holds the functions dropped by the
+// current pass
+static cfuncptr_t decompile_uncached(func_t *f, ea_set_t *done = nullptr) {
+  if (done == nullptr || done->insert(f->start_ea).second) {
+    mark_cfunc_dirty(f->start_ea);
+  }
+
+  hexrays_failure_t hf;
+  return decompile(f, &hf, DECOMP_NO_WAIT);
+}
+
 // given a tinfo_t specifying a user-defined type (UDT), look up the specified
 // field by its name, and retrieve its offset.
 bool efi_hexrays::offset_of(tinfo_t tif, const char *name,
@@ -255,6 +267,7 @@ bool efi_hexrays::apply_all_types_for_interfaces(json_list_t protocols) {
   bs_retyper.set_protocols(protocols);
 
   // handle all protocols
+  ea_set_t done;
   for (auto protocol : protocols) {
     auto code_addr = protocol["ea"];
     auto service = protocol["service"];
@@ -267,8 +280,7 @@ bool efi_hexrays::apply_all_types_for_interfaces(json_list_t protocols) {
     bs_retyper.set_code_ea(code_addr);
     bs_retyper.set_func_ea(f->start_ea);
 
-    hexrays_failure_t hf;
-    cfuncptr_t cfunc = decompile(f, &hf, DECOMP_NO_WAIT);
+    cfuncptr_t cfunc = decompile_uncached(f, &done);
 
     // check that the function is decompiled
     if (cfunc == nullptr) {
@@ -303,6 +315,7 @@ bool efi_hexrays::apply_all_types_for_interfaces_smm(json_list_t protocols) {
   smm_retyper.set_protocols(protocols);
 
   // Handle all protocols
+  ea_set_t done;
   for (auto protocol : protocols) {
     auto code_addr = protocol["ea"];
     auto service = protocol["service"];
@@ -315,8 +328,7 @@ bool efi_hexrays::apply_all_types_for_interfaces_smm(json_list_t protocols) {
     smm_retyper.set_code_ea(code_addr);
     smm_retyper.set_func_ea(f->start_ea);
 
-    hexrays_failure_t hf;
-    cfuncptr_t cfunc = decompile(f, &hf, DECOMP_NO_WAIT);
+    cfuncptr_t cfunc = decompile_uncached(f, &done);
 
     // check that the function is decompiled
     if (cfunc == nullptr) {
@@ -339,8 +351,7 @@ uint8_t efi_hexrays::variables_info_extract_all(func_t *f, ea_t code_addr) {
   }
 
   variables_info_extractor_t extractor(code_addr);
-  hexrays_failure_t hf;
-  cfuncptr_t cfunc = decompile(f, &hf, DECOMP_NO_WAIT);
+  cfuncptr_t cfunc = decompile_uncached(f);
 
   // check that the function is decompiled
   if (cfunc == nullptr) {
@@ -364,8 +375,7 @@ bool efi_hexrays::propagate_types(func_t *f, uint8_t depth) {
     return false;
   }
 
-  hexrays_failure_t hf;
-  cfuncptr_t cfunc = decompile(f, &hf, DECOMP_NO_WAIT);
+  cfuncptr_t cfunc = decompile_uncached(f);
   if (cfunc == nullptr) {
     return false;
   }
@@ -393,8 +403,7 @@ json efi_hexrays::detect_vars(func_t *f) {
   }
 
   variables_detector_t vars_detector;
-  hexrays_failure_t hf;
-  cfuncptr_t cfunc = decompile(f, &hf, DECOMP_NO_WAIT);
+  cfuncptr_t cfunc = decompile_uncached(f);
   if (cfunc == nullptr) {
     return res;
   }
@@ -422,8 +431,7 @@ json_list_t efi_hexrays::detect_services(func_t *f) {
   }
 
   services_detector_t services_detector;
-  hexrays_failure_t hf;
-  cfuncptr_t cfunc = decompile(f, &hf, DECOMP_NO_WAIT);
+  cfuncptr_t cfunc = decompile_uncached(f);
   if (cfunc == nullptr) {
     return res;
   }
@@ -442,8 +450,7 @@ bool efi_hexrays::detect_pei_services(func_t *f) {
   }
 
   pei_services_detector_t pei_services_detector;
-  hexrays_failure_t hf;
-  cfuncptr_t cfunc = decompile(f, &hf, DECOMP_NO_WAIT);
+  cfuncptr_t cfunc = decompile_uncached(f);
   if (cfunc == nullptr) {
     return false;
   }
@@ -465,8 +472,7 @@ json_list_t efi_hexrays::detect_pei_services_arm(func_t *f) {
   }
 
   pei_services_detector_arm_t pei_services_detector_arm;
-  hexrays_failure_t hf;
-  cfuncptr_t cfunc = decompile(f, &hf, DECOMP_NO_WAIT);
+  cfuncptr_t cfunc = decompile_uncached(f);
   if (cfunc == nullptr) {
     return res;
   }
