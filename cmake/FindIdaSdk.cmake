@@ -75,7 +75,8 @@ function(_ida_common_target_settings t ea64)
   target_compile_definitions(
     ${t} PUBLIC ${IdaSdk_PLATFORM} ${IdaSdk_ARCH_DEFINITIONS} __IDP__
                 USE_DANGEROUS_FUNCTIONS USE_STANDARD_FILE_FUNCTIONS)
-  target_include_directories(${t} PUBLIC ${IdaSdk_INCLUDE_DIRS})
+  # SYSTEM keeps the compiler from reporting warnings in the SDK headers
+  target_include_directories(${t} SYSTEM PUBLIC ${IdaSdk_INCLUDE_DIRS})
 endfunction()
 
 # Locate ida.lib for the given address size, trying the idasdk94 layout first

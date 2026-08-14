@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 3.10)
 
 if(APPLE AND NOT CMAKE_OSX_ARCHITECTURES)
   # to build Mach-O universal binaries with 2 architectures
-  set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "" FORCE)
+  set(CMAKE_OSX_ARCHITECTURES
+      "x86_64;arm64"
+      CACHE STRING "" FORCE)
 endif()
 
 project(efiXplorer CXX)
@@ -17,8 +19,13 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 if(NOT MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
-  add_compile_options(-fPIC -O3 -flto)
+  set(lto_flag -flto)
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(lto_flag -flto=auto)
+  endif()
+  set(CMAKE_CXX_FLAGS
+      "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations ${lto_flag}")
+  add_compile_options(-fPIC -O3)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../cmake)
@@ -26,7 +33,7 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../cmake)
 find_package(IdaSdk REQUIRED)
 
 include_directories(${PROJECT_SOURCE_DIR})
-include_directories(${PROJECT_SOURCE_DIR}/../third_party/nlohmann_json)
+include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/../third_party/nlohmann_json)
 
 # efiXplorer sources
 set(efiXplorer_src
@@ -50,7 +57,7 @@ set(efiXplorer_src
 if(HexRaysSdk_ROOT_DIR)
   add_definitions(-DHEX_RAYS=1)
   set(HexRaysSdk_INCLUDE_DIRS ${HexRaysSdk_ROOT_DIR}/include)
-  include_directories(${HexRaysSdk_INCLUDE_DIRS})
+  include_directories(SYSTEM ${HexRaysSdk_INCLUDE_DIRS})
   list(APPEND efiXplorer_src "efi_hexrays.cc" "efi_hexrays.h")
 endif()
 
@@ -59,7 +66,7 @@ endif()
 add_ida_plugin(efiXplorer NOEA32 ${PROJECT_SOURCE_DIR}/efixplorer.cc)
 
 set_ida_target_properties(efiXplorer PROPERTIES CXX_STANDARD 20)
-ida_target_include_directories(efiXplorer PRIVATE ${IdaSdk_INCLUDE_DIRS})
+ida_target_include_directories(efiXplorer SYSTEM PRIVATE ${IdaSdk_INCLUDE_DIRS})
 
 add_ida_library(efiXplorer_lib NOEA32 ${efiXplorer_src})
 ida_target_link_libraries(efiXplorer efiXplorer_lib)

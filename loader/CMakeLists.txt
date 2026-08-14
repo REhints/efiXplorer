@@ -5,7 +5,9 @@ cmake_minimum_required(VERSION 3.10)
 
 if(APPLE AND NOT CMAKE_OSX_ARCHITECTURES)
   # to build Mach-O universal binaries with 2 architectures
-  set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "" FORCE)
+  set(CMAKE_OSX_ARCHITECTURES
+      "x86_64;arm64"
+      CACHE STRING "" FORCE)
 endif()
 
 project(efiXloader)
@@ -20,8 +22,14 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 if(NOT MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
-  add_compile_options(-fPIC -O3 -flto)
+  set(lto_flag -flto)
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(lto_flag -flto=auto)
+  endif()
+  set(CMAKE_CXX_FLAGS
+      "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations ${lto_flag}")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${lto_flag}")
+  add_compile_options(-fPIC -O3)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../cmake)
@@ -31,7 +39,7 @@ find_package(IdaSdk REQUIRED)
 set(THIRD_PARTY_DIR "${PROJECT_SOURCE_DIR}/../third_party")
 set(UEFITOOL_DIR "${THIRD_PARTY_DIR}/uefitool")
 
-include_directories(${THIRD_PARTY_DIR})
+include_directories(SYSTEM ${THIRD_PARTY_DIR})
 
 file(
   GLOB
@@ -76,7 +84,7 @@ file(GLOB efiXloader_src "*.cc" "*.h")
 add_ida_loader(efiXloader NOEA32 ${PROJECT_SOURCE_DIR}/efi_loader.cc)
 
 set_ida_target_properties(efiXloader PROPERTIES CXX_STANDARD 17)
-ida_target_include_directories(efiXloader PRIVATE ${IdaSdk_INCLUDE_DIRS})
+ida_target_include_directories(efiXloader SYSTEM PRIVATE ${IdaSdk_INCLUDE_DIRS})
 
 add_ida_library(efiXloader_lib NOEA32 ${efiXloader_src} ${uefitool_src}
                 uefitool.cc uefitool.h)
