@@ -48,6 +48,24 @@ else()
   message(FATAL_ERROR "Unsupported system type: ${CMAKE_SYSTEM_NAME}")
 endif()
 
+list(LENGTH CMAKE_OSX_ARCHITECTURES _ida_osx_arch_count)
+if(APPLE AND _ida_osx_arch_count EQUAL 1)
+  string(TOLOWER "${CMAKE_OSX_ARCHITECTURES}" _ida_arch_input)
+else()
+  string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" _ida_arch_input)
+endif()
+
+set(IdaSdk_ARCH x64) # the default, needs no architecture macro
+set(IdaSdk_ARCH_DEFINITIONS "")
+if(APPLE AND _ida_osx_arch_count GREATER 1)
+  set(IdaSdk_ARCH "") # universal binary
+elseif(_ida_arch_input MATCHES "^(arm64|aarch64)$")
+  set(IdaSdk_ARCH arm64)
+  set(IdaSdk_ARCH_DEFINITIONS __ARM__)
+endif()
+unset(_ida_osx_arch_count)
+unset(_ida_arch_input)
+
 function(_ida_common_target_settings t ea64)
   if(ea64) # Support for 64-bit addresses.
     target_compile_definitions(${t} PUBLIC __EA64__)
@@ -55,26 +73,30 @@ function(_ida_common_target_settings t ea64)
   # Add the necessary __IDP__ define and allow to use "dangerous" and standard
   # file functions.
   target_compile_definitions(
-    ${t} PUBLIC ${IdaSdk_PLATFORM} __X64__ __IDP__ USE_DANGEROUS_FUNCTIONS
-                USE_STANDARD_FILE_FUNCTIONS)
+    ${t} PUBLIC ${IdaSdk_PLATFORM} ${IdaSdk_ARCH_DEFINITIONS} __IDP__
+                USE_DANGEROUS_FUNCTIONS USE_STANDARD_FILE_FUNCTIONS)
   target_include_directories(${t} PUBLIC ${IdaSdk_INCLUDE_DIRS})
 endfunction()
 
+# Locate ida.lib for the given address size, trying the idasdk94 layout first
+function(_target_link_libraries_win t bits)
+  foreach(candidate ${IdaSdk_ARCH}_win_${bits} ${IdaSdk_ARCH}_win_vc_${bits}
+                    ${IdaSdk_ARCH}_win_vc_${bits}_pro)
+    if(EXISTS ${IdaSdk_DIR}/lib/${candidate}/ida.lib)
+      target_link_libraries(${t} ${IdaSdk_DIR}/lib/${candidate}/ida.lib)
+      return()
+    endif()
+  endforeach()
+  message(FATAL_ERROR "ida.lib could not be found for ${IdaSdk_ARCH}/${bits}")
+endfunction()
+
 function(_target_link_libraries_win_ea64 t)
-  if(EXISTS ${IdaSdk_DIR}/lib/x64_win_64/ida.lib)
-    target_link_libraries(${t} ${IdaSdk_DIR}/lib/x64_win_64/ida.lib)
-  elseif(EXISTS ${IdaSdk_DIR}/lib/x64_win_vc_64/ida.lib)
-    target_link_libraries(${t} ${IdaSdk_DIR}/lib/x64_win_vc_64/ida.lib)
-  elseif(EXISTS ${IdaSdk_DIR}/lib/x64_win_vc_64_pro/ida.lib)
-    target_link_libraries(${t} ${IdaSdk_DIR}/lib/x64_win_vc_64_pro/ida.lib)
-  else()
-    message(FATAL_ERROR "ida.lib could not be found")
-  endif()
+  _target_link_libraries_win(${t} 64)
 endfunction()
 
 function(_target_link_libraries_win_ea32 t)
   # Should not be used on idasdk90 and later
-  target_link_libraries(${t} ${IdaSdk_DIR}/lib/x64_win_vc_32_pro/ida.lib)
+  _target_link_libraries_win(${t} 32)
 endfunction()
 
 function(_ida_plugin name ea64 link_script) # ARGN contains sources

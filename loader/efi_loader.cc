@@ -112,13 +112,13 @@ void idaapi load_file(linput_t *li, ushort /*neflag*/,
     return;
   }
 
+  efiloader::PeManager pe_manager(uefi_parser.machine_type, load_32bit_pei);
+
   if (load_32bit_pei) {
     add_til("uefi.til", ADDTIL_DEFAULT);
   } else {
     add_til("uefi64.til", ADDTIL_DEFAULT);
   }
-
-  efiloader::PeManager pe_manager(uefi_parser.machine_type, load_32bit_pei);
 
   int processed = 0;
   for (size_t i = 0; i < uefi_parser.files.size(); i++) {

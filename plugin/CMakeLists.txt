@@ -1,15 +1,15 @@
 cmake_minimum_required(VERSION 3.10)
 
+if(APPLE AND NOT CMAKE_OSX_ARCHITECTURES)
+  # to build Mach-O universal binaries with 2 architectures
+  set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "" FORCE)
+endif()
+
 project(efiXplorer CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-if(APPLE)
-  # to build Mach-O universal binaries with 2 architectures
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -arch x86_64 -arch arm64")
-endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   set(CMAKE_CXX_FLAGS

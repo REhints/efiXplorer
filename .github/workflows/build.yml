@@ -16,11 +16,11 @@ jobs:
           cmake --build build --config Release --parallel
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: efiXplorer64.dll
+          name: efiXplorer.dll
           path: build/plugin/Release/efiXplorer64.dll
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: efiXloader64.dll
+          name: efiXloader.dll
           path: build/loader/Release/efiXloader64.dll
 
   build-linux:
@@ -35,11 +35,30 @@ jobs:
           cmake --build build --config Release --parallel
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: efiXplorer64.so
+          name: efiXplorer.so
           path: build/plugin/efiXplorer64.so
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: efiXloader64.so
+          name: efiXloader.so
+          path: build/loader/efiXloader64.so
+
+  build-linux-aarch64:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          submodules: true
+      - name: build plugin and loader
+        run: |
+          cmake -S . -B build -DIdaSdk_DIR=third_party/idasdk/src -DHexRaysSdk_ROOT_DIR=third_party/idasdk/src
+          cmake --build build --config Release --parallel
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: efiXplorer-aarch64.so
+          path: build/plugin/efiXplorer64.so
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: efiXloader-aarch64.so
           path: build/loader/efiXloader64.so
 
   build-macos:
