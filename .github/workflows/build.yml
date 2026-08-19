@@ -73,9 +73,9 @@ jobs:
           cmake --build build --config Release --parallel
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: efiXplorer64.dylib
+          name: efiXplorer.dylib
           path: build/plugin/efiXplorer64.dylib
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: efiXloader64.dylib
+          name: efiXloader.dylib
           path: build/loader/efiXloader64.dylib
