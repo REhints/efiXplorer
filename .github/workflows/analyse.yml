@@ -18,9 +18,9 @@ jobs:
         language: ["cpp"]
     steps:
       - name: checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        uses: actions/checkout@v7.0.1
       - name: initialise CodeQL
-        uses: github/codeql-action/init@d3678e237b9c32a6c9bffb3315c335f976f3549f
+        uses: github/codeql-action/init@v4.38.3
         with:
           languages: ${{ matrix.language }}
       - name: autobuild
@@ -29,4 +29,4 @@ jobs:
           cmake -S . -B build -DIdaSdk_DIR=third_party/idasdk/src -DHexRaysSdk_ROOT_DIR=third_party/idasdk/src
           cmake --build build --config Release --parallel
       - name: analyse with CodeQL
-        uses: github/codeql-action/analyze@d3678e237b9c32a6c9bffb3315c335f976f3549f
+        uses: github/codeql-action/analyze@v4.38.3
