@@ -2,11 +2,11 @@
 
 This list represents only some of the individuals who have contributed to this project. Contributions extend beyond code to include bug reports, feature requests, testing, documentation, and community engagement. If you have contributed to the project but cannot find your details on this list, please submit a pull request to have them included.
 
-- Yegor Vasilenko / [@yeggor](https://github.com/yeggor) - plugin and loader maintenance and improvements, documentation, community engagement and testing
-- Alex Matrosov / [@matrosov](https://github.com/matrosov) - plugin improvements, documentation, community engagement and testing
-- Philip Lebedev / [@p41l](https://github.com/p41l) - initial implementation of the loader, documentation, community engagement and testing
-- Andrey Labunets / [@isciurus](https://github.com/isciurus) - plugin improvements, documentation, community engagement and testing
-- Rolf Rolles / [@RolfRolles](https://github.com/RolfRolles) - initial implementation of Hex-Rays-based analysers
+- Yegor Vasilenko / [@yeggor](https://github.com/yeggor)
+- Alex Matrosov / [@matrosov](https://github.com/matrosov)
+- Philip Lebedev / [@p41l](https://github.com/p41l)
+- Andrey Labunets / [@isciurus](https://github.com/isciurus)
+- Rolf Rolles / [@RolfRolles](https://github.com/RolfRolles)
 - Alex Ermolov / [@flothrone](https://github.com/flothrone)
 - Sam L. Thomas / [@xorpse](https://github.com/xorpse)
 - Fabio Pagani / [@pagabuc](https://github.com/pagabuc)
@@ -17,5 +17,6 @@ This list represents only some of the individuals who have contributed to this p
 - Zichuan Li / [@river-li](https://github.com/river-li)
 - Martin Smolar / [@naconaco](https://github.com/naconaco)
 - Dmytro Oleksiuk / [@Cr4sh](https://github.com/Cr4sh)
+- ilikesn0w / [@ilikesn0w](https://github.com/ilikesn0w)
 
 Thanks to all individuals who have contributed to the advancement of this project.
